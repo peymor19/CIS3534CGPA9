@@ -1,44 +1,53 @@
 #!/usr/bin/env python3
-#networkFileRW.py
-#Pamela Brauda
-#Thursday, March 3, 2022
-#Update routers and switches;
-#read equipment from a file, write updates & errors to file
+# networkFileRW.py
+# Peyton Morrison
+# Sunday, Agust 6, 2023
+# Update routers and switches;
+# read equipment from a file, write updates & errors to file
 
-##---->>>> Use a try/except clause to import the JSON module
+# ---->>>> Use a try/except clause to import the JSON module
+import errno
 
+try:
+    import json
+except ModuleNotFoundError as e:
+    print(f"Module not found.\n Error: {e}")
 
+# ---->>>> Create file constants for the file names; file constants can be reused
+# There are 2 files to read this program: equip_r.txt and equip_s.txt
+# There are 2 files to write in this program: updated.txt and errors.txt
 
-##---->>>> Create file constants for the file names; file constants can be reused
-##         There are 2 files to read this program: equip_r.txt and equip_s.txt
-##         There are 2 files to write in this program: updated.txt and errors.txt
-      
+EQUIP_R_FILE = "equip_r.txt"
+EQUIP_S_FILE = "equip_s.txt"
+UPDATED_FILE = "updated.txt"
+ERRORS_FILE = "invalid.txt"
 
-
-
-
-#prompt constants
+# prompt constants
 UPDATE = "\nWhich device would you like to update "
 QUIT = "(enter x to quit)? "
 NEW_IP = "What is the new IP address (111.111.111.111) "
 SORRY = "Sorry, that is not a valid IP address\n"
 
-#function to get valid device
+# function to get valid device
+
+
 def getValidDevice(routers, switches):
     validDevice = False
     while not validDevice:
-        #prompt for device to update
+        # prompt for device to update
         device = input(UPDATE + QUIT).lower()
         if device in routers.keys():
             return device
         elif device in switches.keys():
             return device
         elif device == 'x':
-            return device  
+            return device
         else:
             print("That device is not in the network inventory.")
 
-#function to get valid IP address
+# function to get valid IP address
+
+
 def getValidIP(invalidIPCount, invalidIPAddresses):
     validIP = False
     while not validIP:
@@ -54,34 +63,34 @@ def getValidIP(invalidIPCount, invalidIPAddresses):
                 break
         else:
             #validIP = True
-                return ipAddress, invalidIPCount
-                #don't need to return invalidIPAddresses list - it's an object
-        
+            return ipAddress, invalidIPCount
+            # don't need to return invalidIPAddresses list - it's an object
+
 def main():
 
-    ##---->>>> open files here
+    # ---->>>> open files here
 
+    open_equip_r = open("equip_r.txt", "r")
+    open_equip_s = open("equip_s.txt", "r")
 
+    # dictionaries
+    # ---->>>> read the routers and addresses into the router dictionary
 
-    
-    #dictionaries
-    ##---->>>> read the routers and addresses into the router dictionary
+    routers = json.load(open_equip_r)
+    open_equip_r.close()
 
-    routers = {}
+    # ---->>>> read the switches and addresses into the switches dictionary
 
+    switches = json.load(open_equip_s)
+    open_equip_s.close()
 
-    ##---->>>> read the switches and addresses into the switches dictionary
-
-    switches = {}
-
-
-    #the updated dictionary holds the device name and new ip address
+    # the updated dictionary holds the device name and new ip address
     updated = {}
 
-    #list of bad addresses entered by the user
+    # list of bad addresses entered by the user
     invalidIPAddresses = []
 
-    #accumulator variables
+    # accumulator variables
     devicesUpdatedCount = 0
     invalidIPCount = 0
 
@@ -91,61 +100,59 @@ def main():
 
     print("Network Equipment Inventory\n")
     print("\tequipment name\tIP address")
-    for router, ipa in routers.items(): 
+    for router, ipa in routers.items():
         print("\t" + router + "\t\t" + ipa)
     for switch, ipa in switches.items():
         print("\t" + switch + "\t\t" + ipa)
 
     while not quitNow:
 
-        #function call to get valid device
+        # function call to get valid device
         device = getValidDevice(routers, switches)
-        
+
         if device == 'x':
             quitNow = True
             break
-        
-        #function call to get valid IP address
-        #python lets you return two or more values at one time
+
+        # function call to get valid IP address
+        # python lets you return two or more values at one time
         ipAddress, invalidIPCount = getValidIP(invalidIPCount, invalidIPAddresses)
-  
-        #update device
+
+        # update device
         if 'r' in device:
-            #modify the value associated with the key
-            routers[device] = ipAddress 
+            # modify the value associated with the key
+            routers[device] = ipAddress
             #print("routers", routers)
-            
         else:
             switches[device] = ipAddress
 
         devicesUpdatedCount += 1
-        #add the device and ipAddress to the dictionary
+        # add the device and ipAddress to the dictionary
         updated[device] = ipAddress
 
         print(device, "was updated; the new IP address is", ipAddress)
-        #loop back to the beginning
+        # loop back to the beginning
 
-    #user finished updating devices
-    print("\nSummary:")
-    print()
-    print("Number of devices updated:", devicesUpdatedCount)
+        # user finished updating devices
+        print("\nSummary:")
+        print()
+        print("Number of devices updated:", devicesUpdatedCount)
 
-    ##---->>>> write the updated equipment dictionary to a file
+        # ---->>>> write the updated equipment dictionary to a file
+        with open(UPDATED_FILE, "w") as updated_file:
+            json.dump(updated, updated_file)
 
-    
-    print("Updated equipment written to file 'updated.txt'")
-    print()
-    print("\nNumber of invalid addresses attempted:", invalidIPCount)
+        print("Updated equipment written to file 'updated.txt'")
+        print()
+        print("\nNumber of invalid addresses attempted:", invalidIPCount)
 
-    ##---->>>> write the list of invalid addresses to a file
-    
+        # ---->>>> write the list of invalid addresses to a file
+        with open(ERRORS_FILE, "w") as errors_file:
+            json.dump(invalidIPAddresses, errors_file)
 
-    print("List of invalid addresses written to file 'errors.txt'")
+        print("List of invalid addresses written to file 'errors.txt'")
 
-#top-level scope check
+
+# top-level scope check
 if __name__ == "__main__":
     main()
-
-
-
-
